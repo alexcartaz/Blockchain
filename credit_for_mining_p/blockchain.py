@@ -249,12 +249,13 @@ def mine():
 
     values = request.get_json()
     submitted_proof = values.get('proof')
+    miner_uuid = values.get('miner_uuid')
 
     if blockchain.valid_proof(last_proof, submitted_proof):
         # We must receive a reward for finding the proof.
         # The sender is "0" to signify that this node has mine a new coin
         blockchain.new_transaction(
-            sender="0",
+            sender=miner_uuid,
             recipient=node_identifier,
             amount=1,
         )

@@ -1,5 +1,6 @@
 import hashlib
 import requests
+from uuid import uuid4
 
 import sys
 
@@ -30,6 +31,19 @@ def valid_proof(last_proof, proof):
     guess_hash = hashlib.sha256(guess).hexdigest()
     return guess_hash[:6] == "000000"
 
+def determine_miner_uuid():
+    miner_uuid = ''
+    print('****** file r/w started ******')
+    with open('credit_for_mining_p/my_id', 'r') as reader:
+        file_data = reader.read().replace('\n', '')
+
+    if file_data == '':
+        miner_uuid = str(uuid4()).replace('-', '')
+        with open('credit_for_mining_p/my_id', 'w') as writer:
+            writer.write(miner_uuid)
+    else:
+        miner_uuid = file_data
+    return miner_uuid
 
 if __name__ == '__main__':
     # What node are we interacting with?
@@ -38,6 +52,7 @@ if __name__ == '__main__':
     else:
         node = "http://localhost:5000"
 
+    miner_uuid = determine_miner_uuid()
     coins_mined = 0
     # Run forever until interrupted
     while True:
@@ -46,7 +61,10 @@ if __name__ == '__main__':
         data = r.json()
         new_proof = proof_of_work(data.get('proof'))
 
-        post_data = {"proof": new_proof}
+        post_data = {
+            "proof": new_proof,
+            "miner_uuid": miner_uuid
+        }
 
         r = requests.post(url=node + "/mine", json=post_data)
         data = r.json()

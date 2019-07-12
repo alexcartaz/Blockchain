@@ -1,7 +1,14 @@
 import hashlib
 import requests
+import datetime
+import math
 
 import sys
+
+def check_if_new_proof_on_chain(last_proof):
+    r = requests.get(url=node + "/last_proof")
+    data = r.json()
+    return data.get('proof') != last_proof
 
 def proof_of_work(last_proof):
     """
@@ -12,10 +19,24 @@ def proof_of_work(last_proof):
     """
     print("Searching for next proof")
     proof = 0
+    startTime = datetime.datetime.now()
+    proof_counter = 1
     while valid_proof(last_proof, proof) is False:
         proof += 1
-
+        if proof > proof_counter*10000000:
+            proof_counter += 1
+            didGetSolved = check_if_new_proof_on_chain(last_proof)
+            currentTime = datetime.datetime.now()
+            delta = math.floor(currentTime.timestamp() - startTime.timestamp())
+            print("Elapsed: " + str(delta))
+            print("proof: " + str(proof))
+            if didGetSolved == True:
+                print("Too slow: someone else solved")
+                return proof
+    endTime = datetime.datetime.now()
+    finalTime = math.floor(endTime.timestamp() - startTime.timestamp())
     print("Proof found: " + str(proof))
+    print("Time taken: " + str(finalTime))
     return proof
 
 def valid_proof(last_proof, proof):
